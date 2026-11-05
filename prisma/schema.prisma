@@ -1,0 +1,59 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+enum Role { CUSTOMER ARTIST ORGANIZER ADMIN }
+enum ListingStatus { PENDING APPROVED REJECTED }
+enum BookingStatus { INQUIRY QUOTED CONFIRMED COMPLETED CANCELLED }
+model User {
+ id String @id @default(cuid())
+ name String
+ email String @unique
+ passwordHash String
+ role Role @default(CUSTOMER)
+ createdAt DateTime @default(now())
+ listings Listing[]
+ bookings Booking[] @relation("CustomerBookings")
+}
+model Listing {
+ id String @id @default(cuid())
+ title String
+ category String
+ city String
+ description String
+ startingPrice Int
+ status ListingStatus @default(PENDING)
+ artistId String
+ artist User @relation(fields:[artistId],references:[id])
+ bookings Booking[]
+ createdAt DateTime @default(now())
+}
+model Booking {
+ id String @id @default(cuid())
+ listingId String
+ listing Listing @relation(fields:[listingId],references:[id])
+ customerId String
+ customer User @relation("CustomerBookings",fields:[customerId],references:[id])
+ eventDate DateTime
+ city String
+ message String
+ quotedPrice Int?
+ status BookingStatus @default(INQUIRY)
+ createdAt DateTime @default(now())
+}
+model Event {
+ id String @id @default(cuid())
+ title String
+ city String
+ venue String
+ startsAt DateTime
+ organizerId String
+ createdAt DateTime @default(now())
+ tickets Ticket[]
+}
+model Ticket {
+ id String @id @default(cuid())
+ eventId String
+ event Event @relation(fields:[eventId],references:[id])
+ buyerEmail String
+ qrToken String @unique
+ createdAt DateTime @default(now())
+}
